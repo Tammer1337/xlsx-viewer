@@ -53,7 +53,7 @@
 		}
 	}
 
-	/* TODO: Sort functionality */
+	/* TODO: #1 Sort functionality */
 
 	function highlightMatch(text, query) {
 		const regex = new RegExp(`(${query})`, "gi");
@@ -77,7 +77,7 @@
 		}, 2000);
 	}
 
-	/* TODO: Get Cell Selection */
+	/* TODO: #2 Get Cell Selection */
 	function handleCellSelection(e) {
 		let target = e.target;
 

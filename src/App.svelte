@@ -81,7 +81,7 @@
 		</Button>
 	</div>
 	<Separator class="my-4" />
-	<!-- TODO: Destroy current file from load -->
+	<!-- TODO: #3 Destroy current file from load -->
 	{#if !file}
 		<div
 			id="drop-area"
