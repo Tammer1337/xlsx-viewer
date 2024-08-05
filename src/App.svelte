@@ -64,6 +64,10 @@
 			dropArea.classList.remove("bg-primary-foreground/50");
 		}
 	}
+
+	function handleFileDelete() {
+		file = null;
+	}
 </script>
 
 <Toaster richColors closeButton />
@@ -103,6 +107,6 @@
 			</div>
 		</div>
 	{:else}
-		<XlsxViewer {file} />
+		<XlsxViewer {file} on:deleteFile={handleFileDelete} />
 	{/if}
 </div>

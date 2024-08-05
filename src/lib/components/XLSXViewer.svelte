@@ -1,13 +1,12 @@
 <script>
-	import { onMount } from "svelte";
+	import { onMount, createEventDispatcher } from "svelte";
 	import * as Table from "$lib/components/ui/table";
 	import * as Select from "$lib/components/ui/select";
 	import { Separator } from "$lib/components/ui/separator";
 	import Input from "./ui/input/input.svelte";
-	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
 
 	import { read, utils } from "xlsx";
-	import { Copy, SearchX, Trash } from "lucide-svelte";
+	import { ArrowDownUp, Copy, SearchX, Trash } from "lucide-svelte";
 	import Button from "./ui/button/button.svelte";
 	import { toast } from "svelte-sonner";
 
@@ -19,11 +18,20 @@
 	let header;
 	let searchString = "";
 
+	let sortedSequence = [-1, 0, 1];
+	let sortedBy = "Row";
+
 	onMount(async () => {
 		const f = await file.arrayBuffer();
 		const wb = read(f);
 		workbooks = wb.SheetNames;
 	});
+
+	const dispatch = createEventDispatcher();
+
+	function handleFileDelete() {
+		dispatch("deleteFile");
+	}
 
 	async function loadXLSX(index) {
 		const f = await file.arrayBuffer();
@@ -31,7 +39,13 @@
 		workbooks = wb.SheetNames;
 		const ws = wb.Sheets[wb.SheetNames[index]];
 		data = utils.sheet_to_json(ws);
-		header = Object.keys(data[0]);
+		header = ["Row", ...Object.keys(data[0])];
+
+		/* Add ascending number to data */
+		data = data.map((row, index) => {
+			return { Row: index + 1, ...row };
+		});
+
 		filteredData = data; // Initially, display all data
 	}
 
@@ -65,8 +79,9 @@
 		toast.info(`Row ${index + 1} copied`);
 		copyButton.classList.add("animate-pulse");
 
-		/* Copy to clipboard */
+		/* Copy to clipboard and skip row column */
 		const rowText = Object.values(row)
+			.slice(1)
 			.map((value) => `"${value}"`)
 			.join("\t");
 		navigator.clipboard.writeText(rowText);
@@ -92,7 +107,7 @@
 <div>
 	<div class="flex flex-row items-center justify-between">
 		<h1 class="py-4 text-xl tracking-tight scroll-m-20">{file.name}</h1>
-		<Button on:click variant="ghost" class="hover:bg-red-500 hover:text-white"><Trash class="w-4 h-4" /></Button>
+		<Button on:click={handleFileDelete} variant="ghost" class="hover:bg-red-500 hover:text-white"><Trash class="w-4 h-4" /></Button>
 	</div>
 	<Select.Root onSelectedChange={(v) => handleWorkbookSelection(v.value)}>
 		<Select.Trigger class="w-full ">
@@ -117,9 +132,15 @@
 			<Table.Header>
 				<Table.Row>
 					<Table.Head class="w-8"></Table.Head>
-					<Table.Head class="w-8">Row</Table.Head>
 					{#each header as head}
-						<Table.Head>{head}</Table.Head>
+						<Table.Head>
+							<div class="flex flex-row items-center gap-2">
+								{head}
+								{#if sortedBy === head}
+									<Button variant="ghost"><ArrowDownUp class="w-4 h-4" /></Button>
+								{/if}
+							</div>
+						</Table.Head>
 					{/each}
 				</Table.Row>
 			</Table.Header>
@@ -128,11 +149,11 @@
 				{#each filteredData as row, i}
 					<Table.Row class="items-center">
 						<Table.Cell
-							><Button class="duration-[1ms]" id="copy{i}" variant="ghost" on:click={() => copyRow(row, i)}><Copy class="w-4 h-4" /></Button></Table.Cell
+							><Button class="duration-[1ms]" id="copy{row.Row}" variant="ghost" on:click={() => copyRow(row, i)}><Copy class="w-4 h-4" /></Button
+							></Table.Cell
 						>
-						<Table.Cell>{i + 1}</Table.Cell>
 						{#each header as head}
-							<Table.Cell id="cell{i}{row[head]}" on:click={(e) => handleCellSelection(e)}
+							<Table.Cell id="cell_{head}_{row.Row}" on:click={(e) => handleCellSelection(e)}
 								>{#if searchString.length > 0}
 									{@html highlightMatch(String(row[head]), searchString)}
 								{:else}
