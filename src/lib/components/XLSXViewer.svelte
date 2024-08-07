@@ -11,6 +11,8 @@
 	import { toast } from "svelte-sonner";
 
 	export let file;
+	const dispatch = createEventDispatcher();
+
 	let workbooks;
 	let selectedWBIndex;
 	let data = [];
@@ -24,10 +26,12 @@
 	onMount(async () => {
 		const f = await file.arrayBuffer();
 		const wb = read(f);
-		workbooks = wb.SheetNames;
-	});
 
-	const dispatch = createEventDispatcher();
+		workbooks = wb.SheetNames;
+		if (wb.SheetNames.length == 1) {
+			handleWorkbookSelection(0);
+		}
+	});
 
 	function handleFileDelete() {
 		dispatch("deleteFile");
@@ -105,20 +109,22 @@
 </script>
 
 <div>
-	<div class="flex flex-row items-center justify-between">
+	<div class="flex flex-row items-center justify-between px-4">
 		<h1 class="py-4 text-xl tracking-tight scroll-m-20">{file.name}</h1>
 		<Button on:click={handleFileDelete} variant="ghost" class="hover:bg-red-500 hover:text-white"><Trash class="w-4 h-4" /></Button>
 	</div>
-	<Select.Root onSelectedChange={(v) => handleWorkbookSelection(v.value)}>
-		<Select.Trigger class="w-full ">
-			<Select.Value placeholder="Select worksheet" />
-		</Select.Trigger>
-		<Select.Content>
-			{#each workbooks as workbook, index}
-				<Select.Item value={index}>{workbook}</Select.Item>
-			{/each}
-		</Select.Content>
-	</Select.Root>
+	{#if workbooks && workbooks.length > 1}
+		<Select.Root onSelectedChange={(v) => handleWorkbookSelection(v.value)}>
+			<Select.Trigger class="w-full ">
+				<Select.Value placeholder="Select worksheet" />
+			</Select.Trigger>
+			<Select.Content>
+				{#each workbooks as workbook, index}
+					<Select.Item value={index}>{workbook}</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
+	{/if}
 
 	<Separator class="mt-6" />
 
