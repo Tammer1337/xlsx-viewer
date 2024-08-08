@@ -13,13 +13,17 @@
 	export let file;
 	const dispatch = createEventDispatcher();
 
+	/* Init Variables */
 	let workbooks;
 	let selectedWBIndex;
 	let data = [];
 	let filteredData = [];
 	let header;
+
+	/* Search Variables */
 	let searchString = "";
 
+	/* Sort Variables */
 	let sortedSequence = [-1, 0, 1];
 	let sortedType = 0;
 	let sortedBy;
@@ -38,6 +42,7 @@
 		dispatch("deleteFile");
 	}
 
+	/* TODO: #6 Create a Progress bar or loading indicator */
 	async function loadXLSX(index) {
 		const f = await file.arrayBuffer();
 		const wb = read(f);
@@ -101,9 +106,9 @@
 		return text.replace(regex, '<span class="p-[2px] rounded-sm shadow-sm bg-primary/40">$1</span>');
 	}
 
-	function copyRow(row, index) {
-		let copyButton = document.getElementById("copy" + index);
-		toast.info(`Row ${index + 1} copied`);
+	function copyRow(row) {
+		let copyButton = document.getElementById("copy" + row.Row);
+		toast.info(`Row ${row.Row} copied`);
 		copyButton.classList.add("animate-pulse");
 
 		/* Copy to clipboard and skip row column */
@@ -183,12 +188,9 @@
 			</Table.Header>
 
 			<Table.Body>
-				{#each filteredData as row, i}
-					<Table.Row class="items-center">
-						<Table.Cell
-							><Button class="duration-[1ms]" id="copy{row.Row}" variant="ghost" on:click={() => copyRow(row, i)}><Copy class="w-4 h-4" /></Button
-							></Table.Cell
-						>
+				{#each filteredData as row}
+					<Table.Row class="items-center" id="copy{row.Row}">
+						<Table.Cell><Button class="duration-[1ms]" variant="ghost" on:click={() => copyRow(row)}><Copy class="w-4 h-4" /></Button></Table.Cell>
 						{#each header as head}
 							<Table.Cell id="cell_{head}_{row.Row}" on:click={(e) => handleCellSelection(e)}
 								>{#if searchString.length > 0}
