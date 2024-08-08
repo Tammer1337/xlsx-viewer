@@ -28,6 +28,10 @@
 	let sortedType = 0;
 	let sortedBy;
 
+	/* Cell Variables */
+	let selectedCell;
+	let cellValue = "";
+
 	onMount(async () => {
 		const f = await file.arrayBuffer();
 		const wb = read(f);
@@ -126,14 +130,23 @@
 
 	/* TODO: #2 Get Cell Selection */
 	function handleCellSelection(e) {
-		let target = e.target;
+		if (selectedCell != e.target.id && selectedCell) {
+			document.getElementById(selectedCell).classList.remove("border-2", "border-primary/30", "bg-primary/10");
+		}
+		selectedCell = e.target.id;
 
-		const tdElements = document.querySelector(".border-2.border-primary/40.bg-foreground/10.shadow-lg");
+		document.getElementById(e.target.id).classList.add("border-2", "border-primary/30", "bg-primary/10");
 
-		tdElements?.classList.remove("border-2", "border-primary/40", "bg-foreground/10", "shadow-lg");
-
-		target.classList.add("border-2", "border-primary/40", "bg-foreground/10", "shadow-lg");
+		cellValue = e.target.innerHTML;
 	}
+
+	/* Eventlistener on CTRL+C */
+	window.addEventListener("keydown", (e) => {
+		if (e.ctrlKey && e.key === "c" && cellValue) {
+			e.preventDefault();
+			navigator.clipboard.writeText(cellValue);
+		}
+	});
 </script>
 
 <div>
