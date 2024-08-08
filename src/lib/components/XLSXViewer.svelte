@@ -6,7 +6,7 @@
 	import Input from "./ui/input/input.svelte";
 
 	import { read, utils } from "xlsx";
-	import { ArrowDownUp, Copy, SearchX, Trash } from "lucide-svelte";
+	import { ArrowDown, ArrowDownUp, ArrowUp, Copy, SearchX, Trash } from "lucide-svelte";
 	import Button from "./ui/button/button.svelte";
 	import { toast } from "svelte-sonner";
 
@@ -21,7 +21,8 @@
 	let searchString = "";
 
 	let sortedSequence = [-1, 0, 1];
-	let sortedBy = "Row";
+	let sortedType = 0;
+	let sortedBy;
 
 	onMount(async () => {
 		const f = await file.arrayBuffer();
@@ -71,7 +72,29 @@
 		}
 	}
 
-	/* TODO: #1 Sort functionality */
+	function handleSort(head) {
+		sortedBy = head;
+		const currentSortIndex = sortedSequence.indexOf(sortedType);
+		if (currentSortIndex === -1) {
+			throw new Error("Invalid sort type");
+		}
+
+		const nextIndex = (currentSortIndex + 1) % sortedSequence.length;
+		sortedType = sortedSequence[nextIndex];
+		if (sortedType === 0) {
+			// Reset to original order
+			filteredData = [...data];
+		} else {
+			filteredData = [...data].sort((a, b) => {
+				const aValue = a[sortedBy];
+				const bValue = b[sortedBy];
+
+				if (aValue > bValue) return sortedType;
+				if (aValue < bValue) return -sortedType;
+				return 0;
+			});
+		}
+	}
 
 	function highlightMatch(text, query) {
 		const regex = new RegExp(`(${query})`, "gi");
@@ -142,8 +165,16 @@
 						<Table.Head>
 							<div class="flex flex-row items-center gap-2">
 								{head}
-								{#if sortedBy === head}
-									<Button variant="ghost"><ArrowDownUp class="w-4 h-4" /></Button>
+								{#if sortedBy != ""}
+									<Button variant="ghost" on:click={() => handleSort(head)}>
+										{#if sortedType === 0}
+											<ArrowDownUp class="w-4 h-4" />
+										{:else if sortedType === -1 && sortedBy === head}
+											<ArrowDown class="w-4 h-4" />
+										{:else if sortedType === 1 && sortedBy === head}
+											<ArrowUp class="w-4 h-4" />
+										{/if}
+									</Button>
 								{/if}
 							</div>
 						</Table.Head>
