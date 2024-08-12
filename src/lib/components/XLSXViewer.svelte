@@ -52,15 +52,43 @@
 		const wb = read(f);
 		workbooks = wb.SheetNames;
 		const ws = wb.Sheets[wb.SheetNames[index]];
+
+		// Bestimme den Bereich des Arbeitsblatts
+		let range = utils.decode_range(ws["!ref"]);
+
+		// Überprüfe die ersten Zeilen auf eine gültige Kopfzeile
+		const maxRowsToCheck = 10; // Überprüfe die ersten 10 Zeilen auf eine nicht-leere Kopfzeile
+		let validHeaderRowIndex = 0;
+
+		for (let i = 0; i < maxRowsToCheck; i++) {
+			const rowData = utils.sheet_to_json(ws, { header: 1, range: i, raw: false })[0];
+
+			// Überprüfe, ob diese Zeile mehr als eine nicht-leere Zelle enthält
+			if (rowData && rowData.filter((cell) => cell && cell.trim() !== "").length > 1) {
+				if (i > 0) {
+					toast.info(`We found a valid header row in row ${i + 1}!`);
+				}
+				validHeaderRowIndex = i;
+				break;
+			}
+		}
+
+		// Setze den Start des Bereichs auf die gefundene Kopfzeile
+		range.s.r = validHeaderRowIndex;
+		ws["!ref"] = utils.encode_range(range);
+
+		// Lese die Daten basierend auf dem angepassten Bereich
 		data = utils.sheet_to_json(ws);
+
+		// Extrahiere die Kopfzeile und setze sie
 		header = ["Row", ...Object.keys(data[0])];
 
-		/* Add ascending number to data */
+		// Fügt eine aufsteigende Nummer zu den Daten hinzu
 		data = data.map((row, index) => {
 			return { Row: index + 1, ...row };
 		});
 
-		filteredData = data; // Initially, display all data
+		filteredData = data; // Initialisiere die gefilterten Daten mit allen Daten
 	}
 
 	function handleWorkbookSelection(value) {
@@ -128,7 +156,6 @@
 		}, 2000);
 	}
 
-	/* TODO: #2 Get Cell Selection */
 	function handleCellSelection(e) {
 		if (selectedCell != e.target.id && selectedCell) {
 			document.getElementById(selectedCell).classList.remove("border-2", "border-primary/30", "bg-primary/10");
